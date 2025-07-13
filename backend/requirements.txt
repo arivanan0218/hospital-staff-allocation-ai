@@ -1,0 +1,15 @@
+# backend/requirements.txt
+
+fastapi
+uvicorn
+pydantic
+python-dotenv
+langchain
+langchain-community
+langgraph
+groq
+python-multipart
+python-jose[cryptography]
+passlib[bcrypt]
+httpx
+typing-extensions
