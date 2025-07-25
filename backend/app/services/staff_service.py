@@ -37,6 +37,24 @@ class StaffService:
         """Get staff by role"""
         return db.get_staff_by_role(role)
     
+    async def get_working_staff(self) -> List[StaffMember]:
+        """Get all currently working staff members"""
+        all_staff = db.get_all_staff()
+        working_staff = [
+            staff for staff in all_staff 
+            if hasattr(staff, 'current_shift_id') and staff.current_shift_id
+        ]
+        return working_staff
+        
+    async def get_available_staff_endpoint(self) -> List[StaffMember]:
+        """Get all currently available staff members"""
+        all_staff = db.get_all_staff()
+        available_staff = [
+            staff for staff in all_staff 
+            if not hasattr(staff, 'current_shift_id') or not staff.current_shift_id
+        ]
+        return available_staff
+    
     async def get_available_staff(self, date: str, department: str = None) -> List[StaffMember]:
         """Get staff available on a specific date"""
         if department:

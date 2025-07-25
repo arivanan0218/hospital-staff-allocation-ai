@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
-from app.models.shift import Shift, ShiftCreate, ShiftUpdate
+from app.models.shift import Shift, ShiftCreate, ShiftUpdate, ShiftStatus
 from app.data.database import db
 
 router = APIRouter(prefix="/api/shifts", tags=["shifts"])
@@ -50,6 +50,47 @@ async def get_shifts_by_date(date: str):
 async def get_shifts_by_department(department: str):
     """Get shifts by department"""
     return db.get_shifts_by_department(department)
+
+@router.get("/active", response_model=List[Shift])
+async def get_active_shifts():
+    active_shifts = db.get_active_shifts()
+    if not active_shifts:
+        raise HTTPException(status_code=404, detail="No active shifts found")
+    return active_shifts
+
+@router.post("/{shift_id}/start", response_model=Shift)
+async def start_shift(shift_id: str):
+    """Mark a shift as started"""
+    shift = db.get_shift_by_id(shift_id)
+    if not shift:
+        raise HTTPException(status_code=404, detail="Shift not found")
+    
+    # Update shift status
+    shift_update = {"status": "in_progress"}
+    updated_shift = db.update_shift(shift_id, shift_update)
+    
+    # Update staff's current shift
+    if hasattr(shift, 'staff_id') and shift.staff_id:
+        db.update_staff(shift.staff_id, {"current_shift_id": shift_id})
+    
+    return updated_shift
+
+@router.post("/{shift_id}/complete", response_model=Shift)
+async def complete_shift(shift_id: str):
+    """Mark a shift as completed"""
+    shift = db.get_shift_by_id(shift_id)
+    if not shift:
+        raise HTTPException(status_code=404, detail="Shift not found")
+    
+    # Update shift status
+    shift_update = {"status": "completed"}
+    updated_shift = db.update_shift(shift_id, shift_update)
+    
+    # Clear staff's current shift
+    if hasattr(shift, 'staff_id') and shift.staff_id:
+        db.update_staff(shift.staff_id, {"current_shift_id": None})
+    
+    return updated_shift
 
 @router.get("/search/", response_model=List[Shift])
 async def search_shifts(

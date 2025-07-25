@@ -51,8 +51,24 @@ async def get_staff_by_role(role: str):
     """Get staff by role"""
     return await staff_service.get_staff_by_role(role)
 
-@router.get("/available/{date}", response_model=List[StaffMember])
-async def get_available_staff(
+@router.get("/working", response_model=List[StaffMember])
+async def get_working_staff():
+    """Get all currently working staff members"""
+    working_staff = await staff_service.get_working_staff()
+    if not working_staff:
+        raise HTTPException(status_code=404, detail="No working staff found")
+    return working_staff
+
+@router.get("/available/current", response_model=List[StaffMember])
+async def get_currently_available_staff():
+    """Get all currently available staff members"""
+    available_staff = await staff_service.get_available_staff_endpoint()
+    if not available_staff:
+        raise HTTPException(status_code=404, detail="No available staff found")
+    return available_staff
+
+@router.get("/available/for-date/{date}", response_model=List[StaffMember])
+async def get_available_staff_for_date(
     date: str,
     department: Optional[str] = Query(None, description="Filter by department")
 ):
